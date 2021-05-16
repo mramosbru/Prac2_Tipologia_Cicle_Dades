@@ -1,0 +1,1 @@
+# Prac2_Tipologia_Cicle_Dades

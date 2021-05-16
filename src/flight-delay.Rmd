@@ -1,0 +1,29 @@
+---
+title: 'PRAC2: Neteja i anàlisi de les dades'
+author: "Marc Ferrer Margarit (mferrermargarit@uoc.edu) i Marc Ramos Bruach (mramosbru@uoc.edu)"
+date: "5/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Descripció del dataset. Perquè és important i quina pregunta/problema pretén respondre? (0.5) (MF)
+
+2. Integració i selecció de les dades d’interès a analitzar. (0.5) (MF)
+
+3. Neteja de les dades. (2) (MR)
+3.1. Les dades contenen zeros o elements buits? Com gestionaries aquests casos? (1)
+3.2. Identificació i tractament de valors extrems. (1)s
+
+4. Anàlisi de les dades. (2.5) (MR)
+4.1. Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar). (0.5)
+4.2. Comprovació de la normalitat i homogeneïtat de la variància. (1)
+4.3. Aplicació de proves estadístiques per comparar els grups de dades. En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents. (1)
+
+5. Representació dels resultats a partir de taules i gràfiques. (2) (MF)
+
+6. Resolució del problema. A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema? (0.5) (MR)
+
+7. Codi: Cal adjuntar el codi, preferiblement en R, amb el que s’ha realitzat la neteja, anàlisi i representació de les dades. Si ho preferiu, també podeu treballar en Python. (2) (MF)

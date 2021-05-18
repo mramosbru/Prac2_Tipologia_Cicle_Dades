@@ -3,8 +3,8 @@ title: 'PRAC2: Neteja i anàlisi de les dades'
 author: "Marc Ferrer Margarit (mferrermargarit@uoc.edu) i Marc Ramos Bruach (mramosbru@uoc.edu)"
 date: "5/15/2021"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 
@@ -12,7 +12,7 @@ output:
 
 El dataset que farem servir per a aquesta pràctica conté els retards i cancel·lacions dels vols 2015 que surten de l'aeroport de San Francisco. Normalment els motius principals dels retards de vol són relacionats amb el temps, però en alguns casos també hi ha retards de vols relacionats amb les companyies aèries o aeroports. Aquest document examina i mostra les causes de retard i cancel·lació en diversos aspectes. Així doncs aquest dataset és important per saber quines són les principals causes dels retards que s'hi han produït durant el 2015.
 
-La pregunta o problema que es vol respondre és quines són les causes més comunes que han provocat els retards o les cancel·lacions dels vols i també veure quins són els llocs o el conjunt de destinacions que és més comú que es produeixi una cancel·lació o quines són les aerolínies més propenses a tenir cancel·lacions.
+Les preguntes que volem respondre amb aquest dataset són quins dies de la setmana els quals es produeixen més retards, quines aerolínies són les tenen els retards i veure si la distància dels vols influeix en els retards que es produeixen.
 
 Aquest dataset ha sigut obtingut a partir d'una pràctica anterior realitzada durant el màster de Data Sciene de la UOC. També es pot obtenir el dataset complet, amb totes les dades dels vols (aprox. 600 MB) al següent enllaç: https://www.kaggle.com/usdot/flight-delays?select=flights.csv
 

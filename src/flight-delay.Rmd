@@ -96,6 +96,20 @@ flights <- within(flights, {
 )
 ```
 
+- Analitzarem els vols també per aerolinia i per dia de la setmana. Categoritzem les variables.
+
+```{r}
+flights$AIRLINE = factor(flights$AIRLINE)
+flights$DAY_OF_WEEK = factor(flights$DAY_OF_WEEK)
+levels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+levels(flights$DAY_OF_WEEK) <- levels
+
+flights$DELAYED = factor(flights$DELAYED)
+levels = c("No", "Yes")
+levels(flights$DELAYED) <- levels
+str(flights)
+```
+
 - Separarem en grups de vols llargs (més de 500 mi) de vols curts (menys de 500 mi).
 
 ```{r}
@@ -104,11 +118,35 @@ flights.long = flights[long_index,]
 flights.short = flights[-long_index,]
 ```
 
-- Analitzarem els vols també per aerolinia i per dia de la setmana. Aquests no caldrà agrupar-los, ja estan categoritzats.
 
 ## 4.2. Comprovació de la normalitat i homogeneïtat de la variància. (1)
 
+Per fer la comprovació de la normalitat de les dades un dels mètodes més habituals és fer servir la funció de Shapiro-Wilk. Mirem en eles variables numèriques:
 
+```{r}
+shapiro.test(flights.long[c(1:5000), "TOTAL_DELAY"])
+shapiro.test(flights.long[c(1:5000), "DISTANCE"])
+shapiro.test(flights.long[c(1:5000), "DAY_OF_WEEK"])
+shapiro.test(flights.long[c(1:5000), "AIRLINES"])
+
+shapiro.test(flights.short[c(1:5000), "TOTAL_DELAY"])
+shapiro.test(flights.short[c(1:5000), "DISTANCE"])
+shapiro.test(flights.short[c(1:5000), "DAY_OF_WEEK"])
+shapiro.test(flights.short[c(1:5000), "DAY_OF_WEEK"])
+```
+
+Aquest test és més restrictiu que el test de Kolmogorov-Smirnov. Només podem presentar 5000 mostres en el test. Com el p valor que resulta és inferior a 0.05 es rebutja l'hipòtesi nul·la i considera que la distribució no és normal.
+
+Veiem el test de l'homoscedasticitat per asegurar igualtat de variàncies. Aplicarem el test de Fligner-Killeen, que es tracta de l’alternativa no paramètrica, utilitzada quan les dades no compleixen amb la condició de normalitat.
+
+```{r}
+fligner.test(TOTAL_DELAY~DISTANCE, data  = flights.long)
+fligner.test(TOTAL_DELAY~DAY_OF_WEEK, data  = flights.long)
+
+fligner.test(TOTAL_DELAY~DISTANCE, data  = flights.short)
+fligner.test(TOTAL_DELAY~DAY_OF_WEEK, data  = flights.short)
+```
+Atès que les proves resulten en un p-valor inferior al nivell de significació (< 0,05), es rebutja la hipòtesi nul·la d’homoscedasticitat i es conclou que les variables presenta variàncies estadísticament diferents per als diferents grups de spray.
 
 ## 4.3. Aplicació de proves estadístiques per comparar els grups de dades. En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents. (1)
 

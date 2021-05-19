@@ -32,7 +32,8 @@ col_interest = c(
   "DAY_OF_WEEK",
   "AIRLINE",
   "DEPARTURE_DELAY",
-  "ARRIVAL_DELAY", 
+  "ARRIVAL_DELAY",
+  "LATE_AIRCRAFT_DELAY",
   "DISTANCE"
 )
 print(col_interest)
@@ -54,8 +55,10 @@ Amb R és fàcil veure si tenim valors buits (NA) dins les nostres dades:
 colSums(is.na(flights))
 ```
 Veiem alguns valors buits en la variable `ARRIVAL_DELAY`. Hi ha vàries estratègies per a resoldre problemes amb els elements buits, una tècnica eficaç és aplicar la funció kNN amb la qual omplirem els buits fent servir informació de *k* veïns més propers. Aquesta opció escollida es basa en que les variables del nostre dataset guarden certa relació i no són completament independents. Tindrem així uns valors aproximats als esperats que és millor que tenir-ne de buits.
+Com hi ha moltes dades, podriem eliminar els registres on `LATE_AIRCRAFT_DELAY` és nul.
 
 ```{r}
+flights <- flights[!is.na(flights$LATE_AIRCRAFT_DELAY),]
 suppressWarnings(suppressMessages(library(VIM)))
 flights$ARRIVAL_DELAY = kNN(flights)$ARRIVAL_DELAY
 colSums(is.na(flights))
@@ -84,7 +87,7 @@ Amb un gràfic de caixes podem veure clarament si tenim *outliers* o valors extr
 
 ## 4.1. Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar). (0.5)
 
-- Com volem analitzar el retard, considerarem que els vols han tingut retard si la suma del retard de sortida més el d'arribada supera els 10 minuts.
+- Com volem analitzar el retard, considerarem que els vols han tingut retard si la suma del retard de sortida més el d'arribada supera els 10 minuts. En cas que el retard hagi sigut de l'avió mirarem que sigui per sobre de 15 minuts.
 
 ```{r}
 flights$TOTAL_DELAY = flights$DEPARTURE_DELAY + flights$ARRIVAL_DELAY
@@ -94,19 +97,29 @@ flights <- within(flights, {
   DELAYED[TOTAL_DELAY <= 10] <- 0
    } 
 )
+
+flights <- within(flights, { 
+  late_delay_SFO <- NA
+  late_delay_SFO[LATE_AIRCRAFT_DELAY > 15] <- 1
+  late_delay_SFO[LATE_AIRCRAFT_DELAY <= 15] <- 0
+   } )
 ```
 
 - Analitzarem els vols també per aerolinia i per dia de la setmana. Categoritzem les variables.
 
 ```{r}
 flights$AIRLINE = factor(flights$AIRLINE)
-flights$DAY_OF_WEEK = factor(flights$DAY_OF_WEEK)
+flights$DAY_OF_WEEK_FAC = factor(flights$DAY_OF_WEEK)
 levels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-levels(flights$DAY_OF_WEEK) <- levels
+levels(flights$DAY_OF_WEEK_FAC) <- levels
 
 flights$DELAYED = factor(flights$DELAYED)
 levels = c("No", "Yes")
 levels(flights$DELAYED) <- levels
+
+flights$late_delay_SFO = factor(flights$late_delay_SFO)
+levels = c("No", "Yes")
+levels(flights$late_delay_SFO) <- levels
 str(flights)
 ```
 
@@ -124,15 +137,9 @@ flights.short = flights[-long_index,]
 Per fer la comprovació de la normalitat de les dades un dels mètodes més habituals és fer servir la funció de Shapiro-Wilk. Mirem en eles variables numèriques:
 
 ```{r}
-shapiro.test(flights.long[c(1:5000), "TOTAL_DELAY"])
-shapiro.test(flights.long[c(1:5000), "DISTANCE"])
-shapiro.test(flights.long[c(1:5000), "DAY_OF_WEEK"])
-shapiro.test(flights.long[c(1:5000), "AIRLINES"])
-
-shapiro.test(flights.short[c(1:5000), "TOTAL_DELAY"])
-shapiro.test(flights.short[c(1:5000), "DISTANCE"])
-shapiro.test(flights.short[c(1:5000), "DAY_OF_WEEK"])
-shapiro.test(flights.short[c(1:5000), "DAY_OF_WEEK"])
+shapiro.test(flights[c(1:5000), "TOTAL_DELAY"])
+shapiro.test(flights[c(1:5000), "DAY_OF_WEEK"])
+shapiro.test(flights[c(1:5000), "DISTANCE"])
 ```
 
 Aquest test és més restrictiu que el test de Kolmogorov-Smirnov. Només podem presentar 5000 mostres en el test. Com el p valor que resulta és inferior a 0.05 es rebutja l'hipòtesi nul·la i considera que la distribució no és normal.
@@ -140,17 +147,97 @@ Aquest test és més restrictiu que el test de Kolmogorov-Smirnov. Només podem 
 Veiem el test de l'homoscedasticitat per asegurar igualtat de variàncies. Aplicarem el test de Fligner-Killeen, que es tracta de l’alternativa no paramètrica, utilitzada quan les dades no compleixen amb la condició de normalitat.
 
 ```{r}
-fligner.test(TOTAL_DELAY~DISTANCE, data  = flights.long)
-fligner.test(TOTAL_DELAY~DAY_OF_WEEK, data  = flights.long)
-
-fligner.test(TOTAL_DELAY~DISTANCE, data  = flights.short)
-fligner.test(TOTAL_DELAY~DAY_OF_WEEK, data  = flights.short)
+fligner.test(TOTAL_DELAY~DISTANCE, data  = flights)
+fligner.test(TOTAL_DELAY~DAY_OF_WEEK, data  = flights)
 ```
 Atès que les proves resulten en un p-valor inferior al nivell de significació (< 0,05), es rebutja la hipòtesi nul·la d’homoscedasticitat i es conclou que les variables presenta variàncies estadísticament diferents per als diferents grups de spray.
 
 ## 4.3. Aplicació de proves estadístiques per comparar els grups de dades. En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents. (1)
 
+Comprovarem si podem entendre el retard de sortida es pot entendre a partir del retard d'arribada i amb el de l'avió a través d'una regressió lineal. Podem afegir la distancia i el dia de la setmana per millorar el model?
+
+```{r}
+# Agafem el valor de referencia de dia de la setmana dilluns
+day_monday = relevel(factor(flights$DAY_OF_WEEK), ref = 1)
+
+# Agafem com a aeroport de referencia el AA.
+airline_aa=relevel(factor(flights$AIRLINE), ref = 'AA')
+
+model1 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO, data=flights)
+model2 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + DISTANCE, data=flights)
+model3 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + day_monday, data=flights)
+model4 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + airline_aa, data=flights)
+
+
+tabla.coeficientes <-matrix(c(1,summary(model1)$r.squared,2,summary(model2)$r.squared,3,summary(model3)$r.squared,4,summary(model4)$r.squared),ncol = 2, byrow = TRUE)
+
+colnames(tabla.coeficientes) <-c("Modelo", "R^2")
+print(tabla.coeficientes)
+summary(model4)
+```
+Obtenim una R-squared de 0.94 per a tots els models. El model 4 sembla que té una millor capacitat desceriptiva, però tampoc és una millora significativa. 
+Amb un valor p inferior al valor de significació podem dir que es pot explicar la variable DEPARTURE_DELAY amb ARRIVAL_DELAY i late_delay_SFO. Aquesta correlació ens indica que sabent el retard del vol d'arribada podriem predir el retard del següent vol de sortida.
+
+Amb un model de regressió logística veurem si és possible obtenir el retard a partir del dia de la setmana i de la distancia. Preveurem només el retard de sortida:
+
+```{r}
+flights <- within(flights, {   
+  delay_SFO <- NA
+  delay_SFO[DEPARTURE_DELAY >= 15] <- 1
+  delay_SFO[DEPARTURE_DELAY < 15] <- 0
+   } )
+
+flights$delay_SFO <- factor(flights$delay_SFO, levels = c(0, 1))
+str(flights$delay_SFO)
+
+model5 <- glm(flights$delay_SFO ~ day_monday + flights$DISTANCE, family="binomial")
+summary(model5)
+```
+
+
+Podem fer un segon test i respondre a la pregunta, "els vols llargs tenen més retards que els curts?", o dit d'altra manera, "la mitjana dels retards dels vols llargs és major a la dels vols curts?". Així plantegem el següent test de contrast d'hipòtesis de dos mostres sobre la diferencia de mitjanes, amb valor de significació $\alpha=0.05$.
+
+```{r}
+flights.short.late <- flights.short$TOTAL_DELAY
+flights.long.late <- flights.long$TOTAL_DELAY
+t.test(flights.short.late, flights.long.late, alternative = "less")
+```
+
+
+Amb el valor de p superior a 0.05 no podem rebutjar la hipòtesis nul·la i per tant no podem concloure que siguin diferents.
+
+Amb un anàlisis de correlació podem investigar quina de les variables influeix més en el retard dels vols.
+
+```{r}
+library(dplyr)
+columns_to_compare = c("DISTANCE", "DAY_OF_WEEK")
+corr_matrix <-matrix(nc = 2, nr = 0)
+colnames(corr_matrix) <-c("estimate", "p-value")
+
+
+# Calculem el coeficient de correlació per a cada camp respecte la variable quantitativa TOTAL_DELAY
+for (i in columns_to_compare) {
+  spearman_test =cor.test(flights[,i], flights$TOTAL_DELAY, method = "spearman", exact = FALSE )
+  corr_coef = spearman_test$estimate
+  p_val = spearman_test$p.value
+  # Add row to matrix
+  pair =matrix(ncol = 2, nrow = 1)
+  pair[1][1] = corr_coef
+  pair[2][1] = p_val
+  corr_matrix <-rbind(corr_matrix, pair)
+  rownames(corr_matrix)[nrow(corr_matrix)] <-i
+}
+print(corr_matrix)
+```
+La correlació és molt baixa en qualsevol cas i no veiem cap relació directa entre les variables explicatives i el retard.
+
+
 # 5. Representació dels resultats a partir de taules i gràfiques. (2) (MF)
+
+```{r}
+table(flights$AIRLINE, flights$delay_SFO)
+table(flights$DAY_OF_WEEK, flights$delay_SFO)
+```
 
 # 6. Resolució del problema. A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema? (0.5) (MR)
 

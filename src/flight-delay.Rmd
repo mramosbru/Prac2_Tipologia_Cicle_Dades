@@ -234,11 +234,33 @@ La correlació és molt baixa en qualsevol cas i no veiem cap relació directa e
 
 # 5. Representació dels resultats a partir de taules i gràfiques. (2) (MF)
 
+Un cop ja tenim les dades netes i preparades ens centrarem en les variables més importants i les quals ens ajudaran a respondre les preguntes més endavant. Les variables són les aerolínies i els dies de la setmana. D'aquesta forma, a continuació mostrarem les taules d'aquestes variables segons els retards.
+
 ```{r}
 table(flights$AIRLINE, flights$delay_SFO)
 table(flights$DAY_OF_WEEK, flights$delay_SFO)
 ```
 
+Com podem veure les dues taules ens mostren per a cada una de les variables el nombre de vols que han tingut retard i el nombre de vols que no n'han tingut. Partint d'aquestes taules que hem generat, representarem els valors utilitzant uns gràfics de barres de forma que podem veure més clarament la distribució de tots els valors.
+
+```{r}
+table_airlines <- table(flights$delay_SFO, flights$AIRLINE)
+table_dayweek <- table(flights$delay_SFO, flights$DAY_OF_WEEK)
+barplot(table_airlines, main="Airlines flights by the delay", xlab = "Airlines", ylab = "Flights", col = c("green", "red"), legend = c("On Time", "Delayed"), beside = TRUE)
+barplot(table_dayweek, main="Day of week flights by the delay", xlab = "Day of Week", ylab = "Flights", col = c("green", "red"), legend = c("On Time", "Delayed"), beside = TRUE, xlim=c(0,30))
+```
+
+
+Com podem veure els gràfics realitzats ens mostren per cada una de les variables que volem el nombre de vols que no han tingut retards, de color verd, i el nombre de vols que han tingut retard, de color vermell, d'aquesta forma podem veure d'una manera molt ràpida i clara com estan distribuïts els valors en les variables escollides.
+
 # 6. Resolució del problema. A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema? (0.5) (MR)
 
-# 7. Codi: Cal adjuntar el codi, preferiblement en R, amb el que s’ha realitzat la neteja, anàlisi i representació de les dades. Si ho preferiu, també podeu treballar en Python. (2) (MF)
+# 7. Contribucions al treball
+| Contribucions | Accuracy |
+| --- | --- |
+| Recerca prèvia | M.R./ M.F. |
+| Redacció de les respostes | M.R./ M.F. |
+| Desenvolupament codi  | M.R./ M.F. |
+
+# 8. Codi: Cal adjuntar el codi, preferiblement en R, amb el que s’ha realitzat la neteja, anàlisi i representació de les dades. Si ho preferiu, també podeu treballar en Python. (2) (MF)
+

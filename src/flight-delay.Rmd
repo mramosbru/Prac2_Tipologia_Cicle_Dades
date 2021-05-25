@@ -55,12 +55,23 @@ Amb R és fàcil veure si tenim valors buits (NA) dins les nostres dades:
 colSums(is.na(flights))
 ```
 Veiem alguns valors buits en la variable `ARRIVAL_DELAY`. Hi ha vàries estratègies per a resoldre problemes amb els elements buits, una tècnica eficaç és aplicar la funció kNN amb la qual omplirem els buits fent servir informació de *k* veïns més propers. Aquesta opció escollida es basa en que les variables del nostre dataset guarden certa relació i no són completament independents. Tindrem així uns valors aproximats als esperats que és millor que tenir-ne de buits.
-Com hi ha moltes dades, podriem eliminar els registres on `LATE_AIRCRAFT_DELAY` és nul.
 
 ```{r}
-flights <- flights[!is.na(flights$LATE_AIRCRAFT_DELAY),]
+library("sampling")
+# Per questió de memòria del PC reduim el nombre de registres,amb el metode srswor.
+n = 50000
+N=nrow(flights)
+s=srswor(n, N)
+
+flights = flights[which(s == 1),]
+colSums(is.na(flights))
+
+# kNN on ARRIVAL_DELAY
 suppressWarnings(suppressMessages(library(VIM)))
 flights$ARRIVAL_DELAY = kNN(flights)$ARRIVAL_DELAY
+flights$LATE_AIRCRAFT_DELAY = kNN(flights)$LATE_AIRCRAFT_DELAY
+
+# CHECK na values in dataset.
 colSums(is.na(flights))
 ```
 
@@ -79,6 +90,7 @@ D'aquí veiem alguns casos interessants, volem veure els que tenen mínims i mà
 ```{r echo=TRUE, fig.show="hold", out.width="50%"}
 boxplot(flights$DEPARTURE_DELAY, main="Departure delay")
 boxplot(flights$ARRIVAL_DELAY, main="Arrival delay")
+boxplot(flights$LATE_AIRCRAFT_DELAY, main="Late aircraft delay")
 ```
 
 Amb un gràfic de caixes podem veure clarament si tenim *outliers* o valors extrems a les dades. R representa els valors extrems com a cercles més enllà del rang interquartil. Aquests valors són normals ja que pot ser que els vols hagin tingut gran retards. La raó per la qual quasi no podem veure la caixa (a prop de zero) és perquè la gran majoria de vols no tenen retard i els outliers coincideixen amb els vols que en tenen.
@@ -134,12 +146,10 @@ flights.short = flights[-long_index,]
 
 ## 4.2. Comprovació de la normalitat i homogeneïtat de la variància. (1)
 
-Per fer la comprovació de la normalitat de les dades un dels mètodes més habituals és fer servir la funció de Shapiro-Wilk. Mirem en eles variables numèriques:
+Per fer la comprovació de la normalitat de les dades un dels mètodes més habituals és fer servir la funció de Shapiro-Wilk. Mirem en les variables numèriques:
 
 ```{r}
 shapiro.test(flights[c(1:5000), "TOTAL_DELAY"])
-shapiro.test(flights[c(1:5000), "DAY_OF_WEEK"])
-shapiro.test(flights[c(1:5000), "DISTANCE"])
 ```
 
 Aquest test és més restrictiu que el test de Kolmogorov-Smirnov. Només podem presentar 5000 mostres en el test. Com el p valor que resulta és inferior a 0.05 es rebutja l'hipòtesi nul·la i considera que la distribució no és normal.
@@ -152,7 +162,8 @@ fligner.test(TOTAL_DELAY~DAY_OF_WEEK, data  = flights)
 ```
 Atès que les proves resulten en un p-valor inferior al nivell de significació (< 0,05), es rebutja la hipòtesi nul·la d’homoscedasticitat i es conclou que les variables presenta variàncies estadísticament diferents per als diferents grups de spray.
 
-## 4.3. Aplicació de proves estadístiques per comparar els grups de dades. En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents. (1)
+## 4.3. Aplicació de proves estadístiques per comparar els grups de dades. 
+En funció de les dades i de l’objectiu de l’estudi, aplicar proves de contrast d’hipòtesis, correlacions, regressions, etc. Aplicar almenys tres mètodes d’anàlisi diferents. (1)
 
 Comprovarem si podem entendre el retard de sortida es pot entendre a partir del retard d'arribada i amb el de l'avió a través d'una regressió lineal. Podem afegir la distancia i el dia de la setmana per millorar el model?
 
@@ -171,7 +182,7 @@ model4 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + airline_aa, data
 
 tabla.coeficientes <-matrix(c(1,summary(model1)$r.squared,2,summary(model2)$r.squared,3,summary(model3)$r.squared,4,summary(model4)$r.squared),ncol = 2, byrow = TRUE)
 
-colnames(tabla.coeficientes) <-c("Modelo", "R^2")
+colnames(tabla.coeficientes) <-c("Model", "R^2")
 print(tabla.coeficientes)
 summary(model4)
 ```
@@ -195,7 +206,7 @@ summary(model5)
 ```
 
 
-Podem fer un segon test i respondre a la pregunta, "els vols llargs tenen més retards que els curts?", o dit d'altra manera, "la mitjana dels retards dels vols llargs és major a la dels vols curts?". Així plantegem el següent test de contrast d'hipòtesis de dos mostres sobre la diferencia de mitjanes, amb valor de significació $\alpha=0.05$.
+Podem fer un segon test i respondre a la pregunta, "els vols llargs tenen més retards que els curts?", o dit d'altra manera, "la mitjana dels retards dels vols llargs és major a la dels vols curts?". Així plantegem el següent test de contrast d'hipòtesis de dos mostres sobre la diferencia de mitjanes, amb valor de significació $\alpha=0.05$. La hipòtesi nul·la és que el retard dels vols curts és el mateix que el dels vols llargs. La hipòtesi alternativa, és que existeix una diferència (bilateral).
 
 ```{r}
 flights.short.late <- flights.short$TOTAL_DELAY
@@ -237,8 +248,16 @@ La correlació és molt baixa en qualsevol cas i no veiem cap relació directa e
 Un cop ja tenim les dades netes i preparades ens centrarem en les variables més importants i les quals ens ajudaran a respondre les preguntes més endavant. Les variables són les aerolínies i els dies de la setmana. D'aquesta forma, a continuació mostrarem les taules d'aquestes variables segons els retards.
 
 ```{r}
+# In absolute values
 table(flights$AIRLINE, flights$delay_SFO)
 table(flights$DAY_OF_WEEK, flights$delay_SFO)
+
+# In percentage (%)
+T1 <- table(rep(flights$AIRLINE, flights$delay_SFO))
+prop.table(T1)
+
+T2 <- table(rep(flights$DAY_OF_WEEK, flights$delay_SFO))
+prop.table(T2)
 ```
 
 Com podem veure les dues taules ens mostren per a cada una de les variables el nombre de vols que han tingut retard i el nombre de vols que no n'han tingut. Partint d'aquestes taules que hem generat, representarem els valors utilitzant uns gràfics de barres de forma que podem veure més clarament la distribució de tots els valors.
@@ -253,7 +272,13 @@ barplot(table_dayweek, main="Day of week flights by the delay", xlab = "Day of W
 
 Com podem veure els gràfics realitzats ens mostren per cada una de les variables que volem el nombre de vols que no han tingut retards, de color verd, i el nombre de vols que han tingut retard, de color vermell, d'aquesta forma podem veure d'una manera molt ràpida i clara com estan distribuïts els valors en les variables escollides.
 
-# 6. Resolució del problema. A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema? (0.5) (MR)
+# 6. Resolució del problema. 
+A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema? (0.5) (MR)
+
+En aquest treball s'han realitzat tres proves estadístiques sobre un conjunt de dades recollides en l'aeroport de San Francisco a l'any 2015. S'ha treballat amb les variables corresponents als retards del vols i amb els factors que potencialment hi estan relacionats per a solucionar el problema i contestar les preguntes que es plantegen al prinicipi de la pràctica. Al final hem representat els resultats en taules i en gràfics il·lustratius per veure quina informació en podem extreure d'ells.
+
+Després d'analitzar els resultats no podem concloure que els retards dels vols tinguin a veure amb el dia de la setmana o amb la aerolinia. Tampoc existeix una correlació amb la distancia del vol ni influeix que sigui un vol de llarga distància o curta. Els models lineals de predicció de retard en el vol de sortida sabent el vol d'arribada han donat un R-squared per sobre de 0.9 que ens permeten construir un model lineal de predicció sobre els retards de sortida sabent el retard de l'arribada de l'anterior vol.
+
 
 # 7. Contribucions al treball
 | Contribucions | Accuracy |

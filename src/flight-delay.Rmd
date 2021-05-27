@@ -3,8 +3,8 @@ title: 'PRAC2: Neteja i anàlisi de les dades'
 author: "Marc Ferrer Margarit (mferrermargarit@uoc.edu) i Marc Ramos Bruach (mramosbru@uoc.edu)"
 date: "5/15/2021"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 
@@ -236,7 +236,31 @@ La correlació és molt baixa en qualsevol cas i no veiem cap relació directa e
 
 # 5. Representació dels resultats a partir de taules i gràfiques. (2) (MF)
 
-Un cop ja tenim les dades netes i preparades ens centrarem en les variables més importants i les quals ens ajudaran a respondre les preguntes més endavant. Les variables són les aerolínies i els dies de la setmana. D'aquesta forma, a continuació mostrarem les taules d'aquestes variables segons els retards.
+Un cop ja tenim les dades netes farem un anàlisis descriptiu per tal de veure com són les dades i els seus valors. En primer lloc mostrem un resum dels valors que conté la nostra taula:
+
+
+```{r}
+summary(flights, digits = 1)
+
+```
+
+Com podem observar en la taula generada, tenim les diferents variables de la taula i com es troben distribuïdes i els seus valors més importants. A continuació representarem gràficament totes les variables en histogrames per tal de visualitzar molt millor aquests valors.
+
+```{r}
+par(mfrow=c(3,4), mar=c(2,2,2,2))
+hist(flights$DAY_OF_WEEK, main = "DAY_OF_WEEK")
+barplot(summary(flights$AIRLINE), main = "AIRLINE")
+hist(flights$DEPARTURE_DELAY, main = "DEPARTURE_DELAY")
+hist(flights$ARRIVAL_DELAY, main = "ARRIVAL_DELAY")
+hist(flights$DISTANCE, main = "DISTANCE")
+barplot(prop.table(table(flights$ARRIVAL_DELAY_imp)), main = "ARRIVAL_DELAY_imp")
+hist(flights$TOTAL_DELAY, main = "TOTAL_DELAY")
+barplot(summary(flights$DELAYED), main = "DELAYED")
+barplot(summary(flights$DAY_OF_WEEK_FAC),main = "DAY_OF_WEEK_FAC")
+barplot(summary(flights$delay_SFO), main = "delay_SFO")
+```
+
+Un cop ja tenim un resum de les variables, ens centrarem en les variables més importants i les quals ens ajudaran a respondre les preguntes més endavant. Les variables són les aerolínies i els dies de la setmana. D'aquesta forma, a continuació mostrarem les taules d'aquestes variables segons els retards.
 
 ```{r}
 # In absolute values

@@ -33,7 +33,6 @@ col_interest = c(
   "AIRLINE",
   "DEPARTURE_DELAY",
   "ARRIVAL_DELAY",
-  "LATE_AIRCRAFT_DELAY",
   "DISTANCE"
 )
 print(col_interest)
@@ -57,21 +56,11 @@ colSums(is.na(flights))
 Veiem alguns valors buits en la variable `ARRIVAL_DELAY`. Hi ha vàries estratègies per a resoldre problemes amb els elements buits, una tècnica eficaç és aplicar la funció kNN amb la qual omplirem els buits fent servir informació de *k* veïns més propers. Aquesta opció escollida es basa en que les variables del nostre dataset guarden certa relació i no són completament independents. Tindrem així uns valors aproximats als esperats que és millor que tenir-ne de buits.
 
 ```{r}
-library("sampling")
-# Per questió de memòria del PC reduim el nombre de registres,amb el metode srswor.
-n = 50000
-N=nrow(flights)
-s=srswor(n, N)
-
-flights = flights[which(s == 1),]
-colSums(is.na(flights))
-
 # kNN on ARRIVAL_DELAY
 suppressWarnings(suppressMessages(library(VIM)))
-flights$ARRIVAL_DELAY = kNN(flights)$ARRIVAL_DELAY
-flights$LATE_AIRCRAFT_DELAY = kNN(flights)$LATE_AIRCRAFT_DELAY
+flights = kNN(flights, variable="ARRIVAL_DELAY", k=5)
 
-# CHECK na values in dataset.
+# CHECK NA values in dataset.
 colSums(is.na(flights))
 ```
 
@@ -90,7 +79,6 @@ D'aquí veiem alguns casos interessants, volem veure els que tenen mínims i mà
 ```{r echo=TRUE, fig.show="hold", out.width="50%"}
 boxplot(flights$DEPARTURE_DELAY, main="Departure delay")
 boxplot(flights$ARRIVAL_DELAY, main="Arrival delay")
-boxplot(flights$LATE_AIRCRAFT_DELAY, main="Late aircraft delay")
 ```
 
 Amb un gràfic de caixes podem veure clarament si tenim *outliers* o valors extrems a les dades. R representa els valors extrems com a cercles més enllà del rang interquartil. Aquests valors són normals ja que pot ser que els vols hagin tingut gran retards. La raó per la qual quasi no podem veure la caixa (a prop de zero) és perquè la gran majoria de vols no tenen retard i els outliers coincideixen amb els vols que en tenen.
@@ -109,12 +97,6 @@ flights <- within(flights, {
   DELAYED[TOTAL_DELAY <= 10] <- 0
    } 
 )
-
-flights <- within(flights, { 
-  late_delay_SFO <- NA
-  late_delay_SFO[LATE_AIRCRAFT_DELAY > 15] <- 1
-  late_delay_SFO[LATE_AIRCRAFT_DELAY <= 15] <- 0
-   } )
 ```
 
 - Analitzarem els vols també per aerolinia i per dia de la setmana. Categoritzem les variables.
@@ -129,10 +111,6 @@ flights$DELAYED = factor(flights$DELAYED)
 levels = c("No", "Yes")
 levels(flights$DELAYED) <- levels
 
-flights$late_delay_SFO = factor(flights$late_delay_SFO)
-levels = c("No", "Yes")
-levels(flights$late_delay_SFO) <- levels
-str(flights)
 ```
 
 - Separarem en grups de vols llargs (més de 500 mi) de vols curts (menys de 500 mi).
@@ -150,9 +128,12 @@ Per fer la comprovació de la normalitat de les dades un dels mètodes més habi
 
 ```{r}
 shapiro.test(flights[c(1:5000), "TOTAL_DELAY"])
+qqnorm(flights$TOTAL_DELAY)
+qqline(flights$TOTAL_DELAY)
+
 ```
 
-Aquest test és més restrictiu que el test de Kolmogorov-Smirnov. Només podem presentar 5000 mostres en el test. Com el p valor que resulta és inferior a 0.05 es rebutja l'hipòtesi nul·la i considera que la distribució no és normal.
+Aquest test és més restrictiu que el test de Kolmogorov-Smirnov. Només podem presentar 5000 mostres en el test. Com el p valor que resulta és inferior a 0.05 es rebutja l'hipòtesi nul·la i considera que la distribució no és normal. El gràfic QQ-plot ens indica que les dades tenen una distribució normal quan els punts segueixen la linia dibuixada. En aquest cas, veiem que divergeixen pels valors a partir de 2 i per tant no podem assumir normalitat.
 
 Veiem el test de l'homoscedasticitat per asegurar igualtat de variàncies. Aplicarem el test de Fligner-Killeen, que es tracta de l’alternativa no paramètrica, utilitzada quan les dades no compleixen amb la condició de normalitat.
 
@@ -174,20 +155,29 @@ day_monday = relevel(factor(flights$DAY_OF_WEEK), ref = 1)
 # Agafem com a aeroport de referencia el AA.
 airline_aa=relevel(factor(flights$AIRLINE), ref = 'AA')
 
-model1 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO, data=flights)
-model2 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + DISTANCE, data=flights)
-model3 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + day_monday, data=flights)
-model4 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + late_delay_SFO + airline_aa, data=flights)
+model1 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY, data=flights)
+model2 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + DISTANCE, data=flights)
+model3 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + day_monday, data=flights)
+model4 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + airline_aa, data=flights)
+model5 <- lm(DEPARTURE_DELAY ~ ARRIVAL_DELAY + airline_aa + DISTANCE + day_monday, data=flights)
 
 
-tabla.coeficientes <-matrix(c(1,summary(model1)$r.squared,2,summary(model2)$r.squared,3,summary(model3)$r.squared,4,summary(model4)$r.squared),ncol = 2, byrow = TRUE)
+tabla.coeficientes <-matrix(c(1,summary(model1)$r.squared,2,summary(model2)$r.squared,3,summary(model3)$r.squared,4,summary(model4)$r.squared,5,summary(model5)$r.squared),ncol = 2, byrow = TRUE)
 
 colnames(tabla.coeficientes) <-c("Model", "R^2")
+
+# Veiem tots els R^2 per cada model:
 print(tabla.coeficientes)
-summary(model4)
+
+summary(model5)
+plot(model5)
 ```
-Obtenim una R-squared de 0.94 per a tots els models. El model 4 sembla que té una millor capacitat desceriptiva, però tampoc és una millora significativa. 
-Amb un valor p inferior al valor de significació podem dir que es pot explicar la variable DEPARTURE_DELAY amb ARRIVAL_DELAY i late_delay_SFO. Aquesta correlació ens indica que sabent el retard del vol d'arribada podriem predir el retard del següent vol de sortida.
+Obtenim una R-squared superior a 0.9 per a tots els models. El model 5 sembla que té una millor capacitat descriptiva, però incloure tots els parametres tampoc es tradueix una millora significativa. Amb la variable `ARRIVAL_DELAY` ja tenim un model prou robust.
+Amb un valor p inferior al valor de significació podem dir que es pot explicar la variable DEPARTURE_DELAY amb ARRIVAL_DELAY. Aquesta correlació ens indica que sabent el retard del vol d'arribada podriem predir el retard del següent vol de sortida. En la gràfica de QQ-plot dels residuals veiem que segueixen una distribució aproximadament normal. EN un boxplot hauriem de veure la mediana al voltant de zero. En aquest cas, no ho compleix i molts valors semblen estar per sota amb alguns valors extrems a la part positiva.
+
+```{r}
+boxplot(model5[['residuals']],main='Boxplot: Residuals',ylab='residual value')
+```
 
 Amb un model de regressió logística veurem si és possible obtenir el retard a partir del dia de la setmana i de la distancia. Preveurem només el retard de sortida:
 
@@ -203,6 +193,7 @@ str(flights$delay_SFO)
 
 model5 <- glm(flights$delay_SFO ~ day_monday + flights$DISTANCE, family="binomial")
 summary(model5)
+plot(model5)
 ```
 
 
@@ -213,8 +204,6 @@ flights.short.late <- flights.short$TOTAL_DELAY
 flights.long.late <- flights.long$TOTAL_DELAY
 t.test(flights.short.late, flights.long.late, alternative = "less")
 ```
-
-
 Amb el valor de p superior a 0.05 no podem rebutjar la hipòtesis nul·la i per tant no podem concloure que siguin diferents.
 
 Amb un anàlisis de correlació podem investigar quina de les variables influeix més en el retard dels vols.
@@ -240,8 +229,8 @@ for (i in columns_to_compare) {
 }
 print(corr_matrix)
 ```
-La correlació és molt baixa en qualsevol cas i no veiem cap relació directa entre les variables explicatives i el retard.
 
+La correlació és molt baixa en qualsevol cas i no veiem cap relació directa entre les variables explicatives i el retard.
 
 # 5. Representació dels resultats a partir de taules i gràfiques. (2) (MF)
 

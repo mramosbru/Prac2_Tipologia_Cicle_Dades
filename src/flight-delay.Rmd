@@ -172,8 +172,10 @@ print(tabla.coeficientes)
 summary(model5)
 plot(model5)
 ```
+
 Obtenim una R-squared superior a 0.9 per a tots els models. El model 5 sembla que té una millor capacitat descriptiva, però incloure tots els parametres tampoc es tradueix una millora significativa. Amb la variable `ARRIVAL_DELAY` ja tenim un model prou robust.
-Amb un valor p inferior al valor de significació podem dir que es pot explicar la variable DEPARTURE_DELAY amb ARRIVAL_DELAY. Aquesta correlació ens indica que sabent el retard del vol d'arribada podriem predir el retard del següent vol de sortida. En la gràfica de QQ-plot dels residuals veiem que segueixen una distribució aproximadament normal. EN un boxplot hauriem de veure la mediana al voltant de zero. En aquest cas, no ho compleix i molts valors semblen estar per sota amb alguns valors extrems a la part positiva.
+
+Amb un valor p inferior al valor de significació podem dir que es pot explicar la variable DEPARTURE_DELAY amb ARRIVAL_DELAY. Aquesta correlació ens indica que sabent el retard del vol d'arribada podriem predir el retard del següent vol de sortida. En la gràfica de QQ-plot dels residuals veiem que segueixen una distribució aproximadament normal. EN un boxplot hauriem de veure la mediana al voltant de zero.
 
 ```{r}
 boxplot(model5[['residuals']],main='Boxplot: Residuals',ylab='residual value')

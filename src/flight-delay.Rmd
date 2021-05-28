@@ -3,8 +3,8 @@ title: 'PRAC2: Neteja i anàlisi de les dades'
 author: "Marc Ferrer Margarit (mferrermargarit@uoc.edu) i Marc Ramos Bruach (mramosbru@uoc.edu)"
 date: "5/15/2021"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 
@@ -284,6 +284,9 @@ barplot(table_airlines, main="Airlines flights by the delay", xlab = "Airlines",
 barplot(table_dayweek, main="Day of week flights by the delay", xlab = "Day of Week", ylab = "Flights", col = c("green", "red"), legend = c("On Time", "Delayed"), beside = TRUE, xlim=c(0,30))
 ```
 
+```{r}
+write.csv(flights, file = "../data/flights_out.csv")
+```
 
 Com podem veure els gràfics realitzats ens mostren per cada una de les variables que volem el nombre de vols que no han tingut retards, de color verd, i el nombre de vols que han tingut retard, de color vermell, d'aquesta forma podem veure d'una manera molt ràpida i clara com estan distribuïts els valors en les variables escollides.
 

@@ -11,6 +11,7 @@ La pràctica ha sigut realitzada en grup format per  **Marc Ramos Bruach** i **M
 ## Fitxers i estructura
 
 * **data/flights.csv**: Fitxer csv que conté el dataset original.
+* **data/flights_out.csv**: Fitxer csv que conté el dataset modificat i utilitzat per l'anàlisi.
 * **src/flight-delay.Rmd**: Fitxer Rmd que conté la documentació i el codi per tal de ser executat i poder respondre les preguntes de l'enunciat.
 * **src/flight-delay.html**: Fitxer html que conté les preguntes de l'enunciat i el codi en format navegador.
 * **src/flight-delay.pdf**: Fitxer pdf que conté les preguntes de l'enunciat i el codi en format pdf.

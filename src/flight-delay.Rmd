@@ -3,12 +3,12 @@ title: 'PRAC2: Neteja i anàlisi de les dades'
 author: "Marc Ferrer Margarit (mferrermargarit@uoc.edu) i Marc Ramos Bruach (mramosbru@uoc.edu)"
 date: "5/15/2021"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 
-# 1. Descripció del dataset. Perquè és important i quina pregunta/problema pretén respondre? (0.5) (MF)
+# 1. Descripció del dataset. Perquè és important i quina pregunta/problema pretén respondre?
 
 El dataset que farem servir per a aquesta pràctica conté els retards i cancel·lacions dels vols 2015 que surten de l'aeroport de San Francisco. Normalment els motius principals dels retards de vol són relacionats amb el temps, però en alguns casos també hi ha retards de vols relacionats amb les companyies aèries o aeroports. Aquest document examina i mostra les causes de retard i cancel·lació en diversos aspectes. Així doncs aquest dataset és important per saber quines són les principals causes dels retards que s'hi han produït durant el 2015.
 
@@ -16,7 +16,7 @@ Les preguntes que volem respondre amb aquest dataset són quins dies de la setma
 
 Aquest dataset ha sigut obtingut a partir d'una pràctica anterior realitzada durant el màster de Data Sciene de la UOC. També es pot obtenir el dataset complet, amb totes les dades dels vols (aprox. 600 MB) al següent enllaç: https://www.kaggle.com/usdot/flight-delays?select=flights.csv
 
-# 2. Integració i selecció de les dades d’interès a analitzar. (0.5) (MF)
+# 2. Integració i selecció de les dades d’interès a analitzar.
 
 Per veure les dades que conté el dataset el carregarem i mostrarem les columnes que conté i la mida del dataset:
 
@@ -45,9 +45,9 @@ flights <- subset(flights, select=col_interest)
 ```
 
 
-# 3. Neteja de les dades. (2) (MR)
+# 3. Neteja de les dades. 
 
-## 3.1. Les dades contenen zeros o elements buits? Com gestionaries aquests casos? (1)
+## 3.1. Les dades contenen zeros o elements buits? Com gestionaries aquests casos?
 
 Amb R és fàcil veure si tenim valors buits (NA) dins les nostres dades:
 ```{r}
@@ -67,7 +67,7 @@ colSums(is.na(flights))
 Veiem que no tenim valors buits en les variables conflictives.
 
 
-## 3.2. Identificació i tractament de valors extrems. (1)
+## 3.2. Identificació i tractament de valors extrems. 
 
 Començarem amb estadística descriptiva bàsica fent ús del summary que ens proporciona R. Aquí podem veure els valors màxims i mínims de cada variable.
 
@@ -83,9 +83,9 @@ boxplot(flights$ARRIVAL_DELAY, main="Arrival delay")
 
 Amb un gràfic de caixes podem veure clarament si tenim *outliers* o valors extrems a les dades. R representa els valors extrems com a cercles més enllà del rang interquartil. Aquests valors són normals ja que pot ser que els vols hagin tingut gran retards. La raó per la qual quasi no podem veure la caixa (a prop de zero) és perquè la gran majoria de vols no tenen retard i els outliers coincideixen amb els vols que en tenen.
 
-# 4. Anàlisi de les dades. (2.5) (MR)
+# 4. Anàlisi de les dades.
 
-## 4.1. Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar). (0.5)
+## 4.1. Selecció dels grups de dades que es volen analitzar/comparar (planificació dels anàlisis a aplicar). 
 
 - Com volem analitzar el retard, considerarem que els vols han tingut retard si la suma del retard de sortida més el d'arribada supera els 10 minuts. En cas que el retard hagi sigut de l'avió mirarem que sigui per sobre de 15 minuts.
 
@@ -122,7 +122,7 @@ flights.short = flights[-long_index,]
 ```
 
 
-## 4.2. Comprovació de la normalitat i homogeneïtat de la variància. (1)
+## 4.2. Comprovació de la normalitat i homogeneïtat de la variància. 
 
 Per fer la comprovació de la normalitat de les dades un dels mètodes més habituals és fer servir la funció de Shapiro-Wilk. Mirem en les variables numèriques:
 
@@ -234,7 +234,7 @@ print(corr_matrix)
 
 La correlació és molt baixa en qualsevol cas i no veiem cap relació directa entre les variables explicatives i el retard.
 
-# 5. Representació dels resultats a partir de taules i gràfiques. (2) (MF)
+# 5. Representació dels resultats a partir de taules i gràfiques. 
 
 Un cop ja tenim les dades netes farem un anàlisis descriptiu per tal de veure com són les dades i els seus valors. En primer lloc mostrem un resum dels valors que conté la nostra taula:
 
@@ -293,17 +293,16 @@ Com podem veure els gràfics realitzats ens mostren per cada una de les variable
 # 6. Resolució del problema. 
 A partir dels resultats obtinguts, quines són les conclusions? Els resultats permeten respondre al problema? (0.5) (MR)
 
-En aquest treball s'han realitzat tres proves estadístiques sobre un conjunt de dades recollides en l'aeroport de San Francisco a l'any 2015. S'ha treballat amb les variables corresponents als retards del vols i amb els factors que potencialment hi estan relacionats per a solucionar el problema i contestar les preguntes que es plantegen al prinicipi de la pràctica. Al final hem representat els resultats en taules i en gràfics il·lustratius per veure quina informació en podem extreure d'ells.
+En aquest treball s'han realitzat tres proves estadístiques sobre un conjunt de dades recollides en l'aeroport de San Francisco a l'any 2015. S'ha treballat amb les variables corresponents als retards del vols i amb els factors que potencialment hi estan relacionats per a solucionar el problema i contestar les preguntes que es plantegen al principi de la pràctica. Al final hem representat els resultats en taules i en gràfics il·lustratius per veure quina informació en podem extreure d'ells.
 
 Després d'analitzar els resultats no podem concloure que els retards dels vols tinguin a veure amb el dia de la setmana o amb la aerolinia. Tampoc existeix una correlació amb la distancia del vol ni influeix que sigui un vol de llarga distància o curta. Els models lineals de predicció de retard en el vol de sortida sabent el vol d'arribada han donat un R-squared per sobre de 0.9 que ens permeten construir un model lineal de predicció sobre els retards de sortida sabent el retard de l'arribada de l'anterior vol.
 
 
 # 7. Contribucions al treball
-| Contribucions | Accuracy |
+| Contribucions | Firma |
 | --- | --- |
 | Recerca prèvia | M.R./ M.F. |
 | Redacció de les respostes | M.R./ M.F. |
 | Desenvolupament codi  | M.R./ M.F. |
 
-# 8. Codi: Cal adjuntar el codi, preferiblement en R, amb el que s’ha realitzat la neteja, anàlisi i representació de les dades. Si ho preferiu, també podeu treballar en Python. (2) (MF)
 
